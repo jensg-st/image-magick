@@ -1,0 +1,197 @@
+swagger: "2.0"
+info:
+  description: Image modifications in Direktiv
+  title: image-magick
+  version: 1.0.0
+  x-direktiv-meta:
+    container: direktiv/image-magick
+    maintainer: |-
+      [direktiv.io](https://www.direktiv.io)
+    issues: https://github.com/direktiv-apps/image-magick/issues
+    url: https://github.com/direktiv-apps/image-magick
+    category: Tools
+    license: |-
+      [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+    long-description: |-
+      This app can run multiple [Image Magick](https://imagemagick.org/index.php) commands. 
+      The results can either be stored in the output folder of Direktiv to store them as variables or returned as base64.
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+paths:
+  /: 
+    delete:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          description: |
+            On cancel Direktiv sends a DELETE request to
+            the action with id in the header
+      x-direktiv:
+        cancel: echo 'cancel {{ .DirektivActionID }}'
+      responses:
+        200:
+    post:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          description: |
+            direktiv action id is an UUID. 
+            For development it can be set to 'development'
+        - name: Direktiv-TempDir
+          in: header
+          type: string
+          description: |
+            direktiv temp dir is the working directory for that request
+            For development it can be set to e.g. '/tmp'
+        - name: body
+          in: body
+          schema:
+            type: object
+            required:
+              - commands
+            properties:
+              commands:
+                type: array
+                items:
+                  type: string
+                example: convert mypic.png -resize 200x100 mypic.jpg
+                description: List of commands to run
+              return:
+                type: array
+                items:
+                  type: string
+                example: myimage.jpg
+                description: Returns the images as base64
+      # direktiv code generation is configured here
+      x-direktiv-function: |-
+        functions:
+          - id: image-magick
+            image: direktiv/image-magick
+            type: knative-workflow
+      x-direktiv-examples:
+        - title: Basic
+          content: |-
+            - id: img
+                 type: action
+                 action:
+                   function: image-magick
+                   input:
+                     commands:
+                       - convert mypic.png json:
+                       - convert mypic.png -fuzz 25% -fill red -opaque white -flatten mypic.png
+                       - convert mypic.png -resize 200x100 mypic.jpg
+                     return:
+                       - mypic.png
+        - title: File Resize
+          content: |-
+            - id: set
+                 type: setter
+                 variables:
+                 - key: mypic.png
+                   scope: workflow
+                   mimeType: application/octet-stream
+                   value: iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAH0lEQVR42mNk+P+/noGKgHHUwFEDRw0cNXDUwJFqIAAczzHZPJWe1QAAAABJRU5ErkJggg==
+                 transition: modify
+               - id: modify 
+                 type: action
+                 action:
+                   function: image
+                   files:
+                     - key: mypic.png
+                       scope: workflow
+                   input: 
+                     commands:
+                       # stores the image in workflow scope variable `resized.png`
+                       - convert mypic.png -resize 200% out/workflow/resized.png 
+      x-direktiv:  
+        debug: true
+        cmds:
+        - action: foreach
+          loop: .Commands 
+          exec: '{{ .Item }}'
+        - action: foreach
+          loop: .Return
+          exec: 'base64 -w 0 {{ .Item }}'
+          silent: true
+        output: |
+          {
+            "commands": {{ index . 0 | toJson }}
+            {{ $l := len (index . 1) }}
+            {{- if gt $l 0 }}
+            , "images": {{ index . 1 | toJson }}
+            {{- end }}
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      responses:
+        200:
+          description: Response contains the results of the command and the requested images as base64.
+          schema:
+            type: object
+            properties:
+              commands:
+                description: List of results for the commands.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    result:
+                      additionalProperties: {}
+                      description: Empty for conversion commands and<br> JSON for json returning commands.
+                      example:
+                        image:
+                          alpha: sss
+                    success:
+                      type: boolean
+                      example: true
+                      description: Indicates success
+              images:
+                description: List of base64 encoded images.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    result:
+                      type: string
+                      example: iVBORw0KGgoA...AABJRU5ErkJggg==
+                      description: Base64 encoded image string
+                    success:
+                      type: boolean
+                      example: true
+                      description: Indicates success
+            example: 
+              greeting: Hello YourName
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorCode:
+              type: string
+            Direktiv-ErrorMessage:
+              type: string
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  direktivFile:
+    type: object
+    x-go-type:
+      type: DirektivFile
+      import:
+        package: github.com/direktiv/apps/go/pkg/apps 
+  error:
+    type: object
+    required:
+      - errorCode
+      - errorMessage
+    properties:
+      errorCode:
+        type: string
+      errorMessage:
+        type: string
