@@ -69,6 +69,24 @@ The results can either be stored in the output folder of Direktiv to store them 
   
 
 [PostOKBody](#post-o-k-body)
+#### Example Reponses
+    
+```json
+[
+  {
+    "result": "",
+    "success": true
+  }
+]
+```
+```json
+[
+  {
+    "result": "iVBORw0KGgoAAAANSUhE...lFTkSuQmCC",
+    "success": true
+  }
+]
+```
 
 ### Errors
 | Type | Description

@@ -133,6 +133,13 @@ paths:
         io.direktiv.ri.error: Can not create information object from request
       responses:
         200:
+          examples:
+            commands:
+            - result: ''
+              success: true
+            images:
+            - result: iVBORw0KGgoAAAANSUhE...lFTkSuQmCC
+              success: true    
           description: Response contains the results of the command and the requested images as base64.
           schema:
             type: object
