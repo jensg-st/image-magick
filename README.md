@@ -62,7 +62,14 @@ The results can either be stored in the output folder of Direktiv to store them 
            - convert mypic.png -resize 200% out/workflow/resized.png 
    ```
 
-### Responses
+### Request
+
+
+
+#### Request Attributes
+[PostParamsBody](#post-params-body)
+
+### Response
   Response contains the results of the command and the requested images as base64.
 #### Reponse Types
     
