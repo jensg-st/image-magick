@@ -4,7 +4,7 @@
 Image modifications in Direktiv
 
 ---
-- #### Category: Tools
+- #### Categories: tools
 - #### Image: direktiv/image-magick 
 - #### License: [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - #### Issue Tracking: https://github.com/direktiv-apps/image-magick/issues
