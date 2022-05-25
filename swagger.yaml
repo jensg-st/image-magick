@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   description: Image modifications in Direktiv
   title: image-magick
-  version: 1.0.0
+  version: "1.0"
   x-direktiv-meta:
     container: direktiv/image-magick
     maintainer: |-
